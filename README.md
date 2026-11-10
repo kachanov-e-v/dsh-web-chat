@@ -1,6 +1,6 @@
 # dsh-web-chat
 
-[![version](https://img.shields.io/badge/version-0.10.1-blue)](CHANGELOG.md)
+[![version](https://img.shields.io/badge/version-0.10.2-blue)](CHANGELOG.md)
 [![license](https://img.shields.io/badge/license-MIT-green)](LICENSE)
 
 **DeepSeek (browser)** — модель для DeepSeek Harness, которая использует ваш
@@ -135,7 +135,8 @@ DSH включение восстанавливается из `sessions.json`.
 
 - **Модель не выбралась.** Панель покажет «model was not switched» или
   «Session model selection is unavailable»; выберите `DeepSeek (browser)` в
-  селекторе модели вручную.
+  селекторе модели вручную. Если модель уже выбрана, но приходит `NOT_ENABLED`,
+  плагин теперь автоматически включает сессию при первом запросе к модели.
 - **Length limit reached.** Плагин сам начнёт новый чат; если нет — нажмите
   «Новый чат». Если новый чат сразу упирается в лимит, уменьшите полный
   промпт/память.

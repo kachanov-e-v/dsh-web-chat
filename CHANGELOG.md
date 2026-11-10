@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.10.2
+
+- A session that actually invokes `deepseek-web` is auto-enabled and persisted,
+  fixing `NOT_ENABLED` after a stale session state or a fresh chat.
+- Lenient `<tool_call>` JSON recovery: literal newlines and trailing commas no
+  longer turn `ask_user_question` into a raw text block.
+- Added regression tests for auto-enable and long `ask_user_question` calls.
+
 ## 0.10.1
 
 - The default GitHub install spec is now `github:kachanov-e-v/dsh-web-chat`

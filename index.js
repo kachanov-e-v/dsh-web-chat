@@ -37,6 +37,22 @@ export async function apply(ctx) {
       bridge: bridges.get('deepseek'),
       state,
       loadMemory: (sessionId) => loadProjectMemory({ ctx, sessionId }),
+      isRootSession: (sessionId) => {
+        try {
+          const agents = ctx.get('agents');
+          if (agents === undefined || typeof agents.roots !== 'function') return true;
+          const roots = agents.roots();
+          if (!Array.isArray(roots) || roots.length === 0) return true;
+          return roots.some((agent) => (agent?.session?.id ?? agent?.id) === sessionId);
+        } catch {
+          return true;
+        }
+      },
+      onSessionEnabled: () => {
+        saveSessions(state.sessions).catch(() => {
+          /* Persistence is best-effort. */
+        });
+      },
     });
     child.effect(
       () => child.llm.registerAdapter(['deepseek-web'], adapter),

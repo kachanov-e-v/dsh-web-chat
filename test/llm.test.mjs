@@ -16,6 +16,15 @@ const TOOLS = [{
   parameters: { type: 'object', properties: { command: { type: 'string' } } },
 }];
 
+const ASK_TOOLS = [
+  ...TOOLS,
+  {
+    name: 'ask_user_question',
+    description: 'Ask the user a structured question',
+    parameters: { type: 'object', properties: {} },
+  },
+];
+
 test('the adapter prompt carries the system prompt, tools, transcript, and protocol', () => {
   const prompt = buildBrowserAgentPrompt({
     system: 'SYS-MARKER',
@@ -237,6 +246,41 @@ test('ask_user_question stays in the prompt even with many tools', () => {
   const prompt = buildBrowserAgentPrompt({ system: '', messages: [], tools });
   assert.match(prompt, /- ask_user_question:/);
   assert.match(prompt, /ambiguous/i);
+});
+
+test('ask_user_question survives literal newlines inside its JSON', () => {
+  const answer = 'Before I continue, one question:\n```tool\n'
+    + '<tool_call>{"name":"ask_user_question","arguments":{"questions":'
+    + '[{"id":"approach","header":"Как продолжать","question":"line1\nline2",'
+    + '"options":[{"label":"Продолжить","description":"..."}]}]}}</tool_call>\n```';
+  const call = parseJsonToolCall(answer, ASK_TOOLS);
+  assert.equal(call.name, 'ask_user_question');
+  assert.equal(call.arguments.questions[0].id, 'approach');
+  assert.match(call.arguments.questions[0].question, /line1/);
+});
+
+test('a model request auto-enables and persists its session', async () => {
+  const state = { sessions: new Map() };
+  let saved = 0;
+  const adapter = createDeepSeekWebAdapter({
+    state,
+    bridge: {
+      ask: async () => ({ answer: 'ok' }),
+    },
+    onSessionEnabled: () => {
+      saved += 1;
+    },
+  });
+  const chunks = [];
+  for await (const chunk of adapter.stream({
+    sessionId: 'session-auto',
+    system: '',
+    messages: [],
+    tools: [],
+  })) chunks.push(chunk);
+  assert.equal(state.sessions.get('session-auto'), true);
+  assert.equal(saved, 1);
+  assert.equal(chunks.find((chunk) => chunk.type === 'text-delta').text, 'ok');
 });
 
 test('partial DOM snapshots are streamed as text deltas', async () => {
