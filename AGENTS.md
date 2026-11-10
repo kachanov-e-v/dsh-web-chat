@@ -1,6 +1,6 @@
 # AGENTS.md
 
-Руководство для AI-агентов, работающих с `dsh-chat-model` (0.9.3).
+Руководство для AI-агентов, работающих с `dsh-chat-model` (0.9.4).
 
 ## Проект
 
@@ -72,3 +72,6 @@
 3. Переустановить бандл и проверить слоты через `cordis_inspect_query`
    (`Slots.listSubTree`).
 4. Проверить живое подключение: включить плагин, открыть DeepSeek, войти.
+5. Для GitHub-релиза: `git tag vX.Y.Z`, `git push origin main --tags`,
+   `gh release create vX.Y.Z`. Установка идёт через
+   `github:kachanov-e-v/dsh-chat-model#vX.Y.Z`.

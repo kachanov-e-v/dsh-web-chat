@@ -1,6 +1,6 @@
 # dsh-chat-model
 
-[![version](https://img.shields.io/badge/version-0.9.3-blue)](CHANGELOG.md)
+[![version](https://img.shields.io/badge/version-0.9.4-blue)](CHANGELOG.md)
 [![license](https://img.shields.io/badge/license-MIT-green)](LICENSE)
 
 **DeepSeek (browser)** — модель для DeepSeek Harness, которая использует ваш
@@ -36,13 +36,28 @@ Chrome/Edge. Плагин не требует API-токена и не чита�
 
 ## Установка
 
+### Из GitHub
+
+В менеджере плагинов DSH укажите GitHub-спецификацию с тегом:
+
+```text
+github:kachanov-e-v/dsh-chat-model#v0.9.4
+```
+
+Репозиторий: https://github.com/kachanov-e-v/dsh-chat-model
+
+`install_bundle` принимает эту спецификацию как installation spec. После
+установки обновите страницу DSH (`F5`) и включите плагин в нужном чате.
+
+### Локальная разработка
+
 ```powershell
 git clone https://github.com/kachanov-e-v/dsh-chat-model.git `
   "C:\Users\<you>\Desktop\dsh\Plugins\dsh-chat-model"
 ```
 
 Затем установите локальный бандл через менеджер плагинов DSH
-(`install_bundle` с путём к папке) и обновите страницу DSH (`F5`).
+(`install_bundle` с путём к папке).
 
 ## Включение
 

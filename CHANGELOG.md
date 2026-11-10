@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.9.4
+
+- Install directly from GitHub with
+  `github:kachanov-e-v/dsh-chat-model#v0.9.4`.
+- README now documents the GitHub installation spec and the tagged release.
+- No runtime changes from 0.9.3.
+
 ## 0.9.3
 
 - Auto-new-chat on DeepSeek `CONTEXT_LIMIT` with a 60-second cooldown and a full
