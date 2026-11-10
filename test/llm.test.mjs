@@ -1,0 +1,350 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+
+import {
+  buildBrowserAgentPrompt,
+  MAX_PROMPT_CHARS,
+  parseDeepSeekToolCall,
+  parseJsonToolCall,
+  stripToolTags,
+} from '../lib/llm/prompt.js';
+import { createDeepSeekWebAdapter } from '../lib/llm/deepseek-web.js';
+
+const TOOLS = [{
+  name: 'bash',
+  description: 'Run a shell command',
+  parameters: { type: 'object', properties: { command: { type: 'string' } } },
+}];
+
+test('the adapter prompt carries the system prompt, tools, transcript, and protocol', () => {
+  const prompt = buildBrowserAgentPrompt({
+    system: 'SYS-MARKER',
+    tools: TOOLS,
+    memory: 'MEMORY-MARKER',
+    messages: [{ role: 'user', content: [{ type: 'text', text: 'build an app' }] }],
+  });
+  assert.match(prompt, /SYS-MARKER/);
+  assert.match(prompt, /Run a shell command/);
+  assert.match(prompt, /MEMORY-MARKER/);
+  assert.match(prompt, /build an app/);
+  assert.match(prompt, /<tool_call>/);
+  assert.match(prompt, /ask_user_question/);
+});
+
+test('a very large request stays inside the hard prompt limit', () => {
+  const prompt = buildBrowserAgentPrompt({
+    system: 'S'.repeat(200000),
+    tools: TOOLS,
+    messages: [{ role: 'user', content: [{ type: 'text', text: 'T'.repeat(200000) }] }],
+  });
+  assert.ok(prompt.length <= MAX_PROMPT_CHARS);
+  assert.match(prompt, /Compacted earlier context/);
+  assert.match(prompt, /--- Tool call protocol ---/);
+  assert.match(prompt, /<tool_call>/);
+});
+
+test('large tool results are clipped with a reread hint', () => {
+  const prompt = buildBrowserAgentPrompt({
+    system: '',
+    tools: TOOLS,
+    messages: [{
+      role: 'tool',
+      toolCallId: 'tool-1',
+      content: [{ type: 'text', text: 'X'.repeat(50000) }],
+    }],
+  });
+  assert.match(prompt, /\[tool result truncated: \d+ chars omitted/);
+  assert.ok(prompt.length < MAX_PROMPT_CHARS);
+});
+
+const DSML = [
+  '< | | DSML | | calls>',
+  '< | | DSML | | invoke name="pwsh">',
+  '< | | DSML | | parameter name="description" string="true">List workspace files</ | | DSML | | parameter>',
+  '< | | DSML | | parameter name="command" string="true">Get-ChildItem -Force | Select-Object Mode, Length, Name</ | | DSML | | parameter>',
+  '</ | | DSML | | invoke>',
+  '</ | | DSML | | calls>',
+].join('\n');
+
+test('parseDeepSeekToolCall reads native DSML into a normal tool call', () => {
+  const call = parseDeepSeekToolCall(DSML, [{ name: 'pwsh' }]);
+  assert.equal(call.name, 'pwsh');
+  assert.deepEqual(call.arguments, {
+    description: 'List workspace files',
+    command: 'Get-ChildItem -Force | Select-Object Mode, Length, Name',
+  });
+  assert.equal(call.text, '');
+  assert.equal(stripToolTags(DSML), '');
+});
+
+test('parseDeepSeekToolCall accepts fullwidth DSML and spaced attributes', () => {
+  const fullwidth = [
+    '<｜｜DSML｜｜ calls>',
+    '<｜｜DSML｜｜ invoke name="edit">',
+    '<｜｜DSML｜｜ parameter name="file_path" string="true">app.js</｜｜DSML｜｜ parameter>',
+    '<｜｜DSML｜｜ parameter name=\n"old_string" string = "true">old</｜｜DSML｜｜ parameter>',
+    '<｜｜DSML｜｜ parameter name="new_string" string="true">new</｜｜DSML｜｜ parameter>',
+    '</｜｜DSML｜｜ invoke>',
+    '</｜｜DSML｜｜ calls>',
+  ].join('\n');
+  const call = parseDeepSeekToolCall(fullwidth, [{ name: 'edit' }]);
+  assert.equal(call.name, 'edit');
+  assert.deepEqual(call.arguments, {
+    file_path: 'app.js',
+    old_string: 'old',
+    new_string: 'new',
+  });
+});
+
+test('the DeepSeek adapter streams a DSML tool call', async () => {
+  const adapter = createDeepSeekWebAdapter({
+    bridge: { ask: async () => ({ answer: DSML }) },
+  });
+  const chunks = [];
+  for await (const chunk of adapter.stream({
+    system: '',
+    messages: [],
+    tools: [{ name: 'pwsh', description: 'Run PowerShell', parameters: { type: 'object' } }],
+  })) chunks.push(chunk);
+  const block = chunks.find((chunk) => chunk.type === 'block-end');
+  assert.equal(block.block.type, 'tool-call');
+  assert.equal(block.block.name, 'pwsh');
+  assert.deepEqual(JSON.parse(block.block.arguments), {
+    description: 'List workspace files',
+    command: 'Get-ChildItem -Force | Select-Object Mode, Length, Name',
+  });
+  assert.equal(chunks.at(-1).reason.kind, 'tool-calls');
+});
+
+test('an unparseable answer returns EMPTY without starting a new chat', async () => {
+  let newChats = 0;
+  const adapter = createDeepSeekWebAdapter({
+    bridge: {
+      ask: async () => ({ answer: '```tool\n<tool_call>{"name":"edit","arguments":{}}</tool_call>\n```' }),
+      startNewChat: async () => {
+        newChats += 1;
+      },
+    },
+  });
+  const chunks = [];
+  for await (const chunk of adapter.stream({ system: '', messages: [], tools: [] })) chunks.push(chunk);
+  assert.equal(newChats, 0);
+  assert.equal(chunks.at(-1).reason.kind, 'error');
+  assert.equal(chunks.at(-1).reason.failure.code, 'EMPTY');
+});
+
+test('a bridge EMPTY answer starts a new chat and retries once', async () => {
+  let calls = 0;
+  let newChats = 0;
+  const adapter = createDeepSeekWebAdapter({
+    bridge: {
+      ask: async () => {
+        calls += 1;
+        if (calls === 1) {
+          const error = new Error('The provider returned an empty answer');
+          error.code = 'EMPTY';
+          throw error;
+        }
+        return { answer: 'recovered' };
+      },
+      startNewChat: async () => {
+        newChats += 1;
+      },
+    },
+  });
+  const chunks = [];
+  for await (const chunk of adapter.stream({ system: '', messages: [], tools: [] })) chunks.push(chunk);
+  assert.equal(newChats, 1);
+  assert.equal(chunks.find((chunk) => chunk.type === 'text-delta').text, 'recovered');
+});
+
+test('a large prompt is compacted without a new chat', async () => {
+  let newChats = 0;
+  let captured = '';
+  const adapter = createDeepSeekWebAdapter({
+    bridge: {
+      ask: async (prompt) => {
+        captured = prompt;
+        return { answer: 'ok' };
+      },
+      startNewChat: async () => {
+        newChats += 1;
+      },
+    },
+  });
+  const chunks = [];
+  for await (const chunk of adapter.stream({
+    system: 'S'.repeat(200000),
+    messages: [{ role: 'user', content: [{ type: 'text', text: 'T'.repeat(200000) }] }],
+    tools: [],
+  })) chunks.push(chunk);
+  assert.equal(newChats, 0);
+  assert.match(captured, /Compacted earlier context/);
+  assert.ok(captured.length <= MAX_PROMPT_CHARS);
+  assert.equal(chunks.find((chunk) => chunk.type === 'text-delta').text, 'ok');
+});
+
+test('subsequent turns send a continuation instead of the full prompt', async () => {
+  const prompts = [];
+  const adapter = createDeepSeekWebAdapter({
+    bridge: {
+      currentChatKey: async () => 'chat-1',
+      ask: async (prompt) => {
+        prompts.push(prompt);
+        return { answer: 'ok' };
+      },
+    },
+  });
+
+  for await (const _chunk of adapter.stream({
+    sessionId: 'session-1',
+    system: 'SYS-MARKER',
+    messages: [{ role: 'user', content: [{ type: 'text', text: 'first' }] }],
+    tools: [],
+  })) { /* consume */ }
+
+  for await (const _chunk of adapter.stream({
+    sessionId: 'session-1',
+    system: 'SYS-MARKER',
+    messages: [
+      { role: 'user', content: [{ type: 'text', text: 'first' }] },
+      { role: 'assistant', content: [{ type: 'text', text: 'answer' }] },
+      { role: 'user', content: [{ type: 'text', text: 'second' }] },
+    ],
+    tools: [],
+  })) { /* consume */ }
+
+  assert.match(prompts[0], /SYS-MARKER/);
+  assert.match(prompts[0], /first/);
+  assert.match(prompts[1], /CONTINUATION/);
+  assert.match(prompts[1], /second/);
+  assert.ok(!prompts[1].includes('SYS-MARKER'));
+});
+
+test('a web-chat length limit starts a new chat and retries with the full prompt', async () => {
+  let calls = 0;
+  let newChats = 0;
+  const prompts = [];
+  const adapter = createDeepSeekWebAdapter({
+    bridge: {
+      currentChatKey: async () => 'chat-1',
+      startNewChat: async () => {
+        newChats += 1;
+      },
+      ask: async (prompt) => {
+        calls += 1;
+        prompts.push(prompt);
+        if (calls === 1) {
+          const error = new Error('Length limit reached');
+          error.code = 'CONTEXT_LIMIT';
+          throw error;
+        }
+        return { answer: 'recovered' };
+      },
+    },
+  });
+  const chunks = [];
+  for await (const chunk of adapter.stream({
+    sessionId: 'session-1',
+    system: 'SYS-MARKER',
+    messages: [{ role: 'user', content: [{ type: 'text', text: 'first' }] }],
+    tools: [],
+  })) chunks.push(chunk);
+  assert.equal(newChats, 1);
+  assert.match(prompts[1], /SYS-MARKER/);
+  assert.ok(!prompts[1].includes('CONTINUATION'));
+  assert.equal(chunks.find((chunk) => chunk.type === 'text-delta').text, 'recovered');
+});
+
+test('automatic new chat is limited by a cooldown', async () => {
+  let newChats = 0;
+  const adapter = createDeepSeekWebAdapter({
+    bridge: {
+      ask: async () => {
+        const error = new Error('The provider returned an empty answer');
+        error.code = 'EMPTY';
+        throw error;
+      },
+      startNewChat: async () => {
+        newChats += 1;
+      },
+    },
+  });
+  for (let attempt = 0; attempt < 2; attempt += 1) {
+    const chunks = [];
+    for await (const chunk of adapter.stream({ system: '', messages: [], tools: [] })) chunks.push(chunk);
+  }
+  assert.equal(newChats, 1);
+});
+test('parseJsonToolCall accepts a valid known tool and strips the block', () => {
+  const call = parseJsonToolCall(
+    'I will inspect.\n<tool_call>{"name":"bash","arguments":{"command":"ls"}}</tool_call>',
+    TOOLS,
+  );
+  assert.equal(call.name, 'bash');
+  assert.deepEqual(call.arguments, { command: 'ls' });
+  assert.equal(call.text, 'I will inspect.');
+  assert.equal(
+    parseJsonToolCall('<tool_call>{"name":"rm","arguments":{}}</tool_call>', TOOLS),
+    undefined,
+  );
+  assert.equal(stripToolTags('a<tool_call>{}</tool_call>b'), 'ab');
+});
+
+test('parseJsonToolCall handles a fenced tool block', () => {
+  const fenced = '```tool\n<tool_call>{"name":"bash","arguments":{"command":"ls"}}</tool_call>\n```';
+  const call = parseJsonToolCall(fenced, TOOLS);
+  assert.equal(call.name, 'bash');
+  assert.deepEqual(call.arguments, { command: 'ls' });
+  assert.equal(call.text, '');
+  assert.equal(stripToolTags(fenced), '');
+});
+
+test('a normal answer becomes a text stream', async () => {
+  const adapter = createDeepSeekWebAdapter({ bridge: { ask: async () => ({ answer: 'hello' }) } });
+  const chunks = [];
+  for await (const chunk of adapter.stream({ system: '', messages: [], tools: [] })) chunks.push(chunk);
+  assert.equal(chunks.length, 4);
+  assert.equal(chunks[1].text, 'hello');
+  assert.equal(chunks[3].reason.kind, 'stop');
+});
+
+test('a tool-call answer becomes a tool-call stream', async () => {
+  const adapter = createDeepSeekWebAdapter({
+    bridge: {
+      ask: async () => ({ answer: '<tool_call>{"name":"bash","arguments":{"command":"ls"}}</tool_call>' }),
+    },
+  });
+  const chunks = [];
+  for await (const chunk of adapter.stream({ system: '', messages: [], tools: TOOLS })) chunks.push(chunk);
+  const block = chunks.find((chunk) => chunk.type === 'block-end');
+  assert.equal(block.block.type, 'tool-call');
+  assert.equal(block.block.name, 'bash');
+  assert.deepEqual(JSON.parse(block.block.arguments), { command: 'ls' });
+  assert.equal(chunks.at(-1).reason.kind, 'tool-calls');
+});
+
+test('a bridge failure becomes an error finish', async () => {
+  const adapter = createDeepSeekWebAdapter({
+    bridge: {
+      ask: async () => {
+        const error = new Error('not logged in');
+        error.code = 'AUTH';
+        throw error;
+      },
+    },
+  });
+  const chunks = [];
+  for await (const chunk of adapter.stream({ system: '', messages: [], tools: [] })) chunks.push(chunk);
+  assert.equal(chunks.at(-1).reason.kind, 'error');
+  assert.equal(chunks.at(-1).reason.failure.code, 'AUTH');
+});
+
+test('the DeepSeek adapter advertises its own provider and model', async () => {
+  const adapter = createDeepSeekWebAdapter({ bridge: { ask: async () => ({ answer: 'ok' }) } });
+  assert.deepEqual(adapter.providerInfo(), { id: 'deepseek-web', name: 'DeepSeek Web' });
+  const models = await adapter.listModels();
+  assert.equal(models[0].id, 'deepseek-web');
+  const resolved = await adapter.resolveModel('deepseek-web', 'deepseek-web');
+  assert.equal(resolved.name, 'DeepSeek (browser)');
+});

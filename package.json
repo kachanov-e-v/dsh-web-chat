@@ -1,0 +1,64 @@
+{
+  "name": "dsh-chat-model",
+  "version": "0.9.3",
+  "private": true,
+  "type": "module",
+  "description": "DeepSeek Harness plugin that uses a logged-in chat.deepseek.com as the DeepSeek (browser) model.",
+  "license": "MIT",
+  "author": "Evgeniy Kachanov",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/kachanov-e-v/dsh-chat-model.git"
+  },
+  "homepage": "https://github.com/kachanov-e-v/dsh-chat-model#readme",
+  "bugs": {
+    "url": "https://github.com/kachanov-e-v/dsh-chat-model/issues"
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "keywords": [
+    "dsh",
+    "deepseek-harness",
+    "plugin",
+    "deepseek",
+    "deepseek-browser",
+    "chat",
+    "bridge",
+    "llm",
+    "cordis"
+  ],
+  "exports": {
+    ".": "./index.js",
+    "./client": "./client.js",
+    "./locale/*.json": "./locale/*.json",
+    "./icon": "./icon.svg"
+  },
+  "files": [
+    "index.js",
+    "client.js",
+    "lib/*.js",
+    "lib/browser/*.js",
+    "lib/llm/*.js",
+    "cordis.patch.yml",
+    "locale/*.json",
+    "icon.svg",
+    "README.md",
+    "ROADMAP.md",
+    "AGENTS.md",
+    "CHANGELOG.md",
+    "LICENSE"
+  ],
+  "dsh": {
+    "bundle": {
+      "patch": "./cordis.patch.yml"
+    },
+    "client": {
+      "platform": "web",
+      "immediately": true,
+      "inject": [
+        "@deepseek-ai/dsh-client-ui-conversation"
+      ]
+    }
+  }
+}

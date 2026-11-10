@@ -1,0 +1,6 @@
+{
+  "meta": {
+    "title": "DeepSeek Browser",
+    "description": "将已登录的 chat.deepseek.com 用作 DeepSeek Harness 中的 DeepSeek (browser) 模型。"
+  }
+}
