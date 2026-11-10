@@ -12,6 +12,40 @@ import {
 } from '../lib/browser/dom.js';
 import { BROWSER_PROVIDERS, browserProviderById } from '../lib/browser/providers.js';
 import { browserProfileDir } from '../lib/browser/cdp.js';
+import { BrowserBridge } from '../lib/browser/manager.js';
+
+test('the streaming bridge reports growing DOM snapshots', async () => {
+  const snapshots = [
+    { ok: true, text: 'Hel' },
+    { ok: true, text: 'Hello' },
+    { ok: true, text: 'Hello' },
+    { ok: true, text: 'Hello' },
+  ];
+  const bridge = new BrowserBridge({
+    provider: {
+      id: 'deepseek',
+      host: 'chat.deepseek.com',
+      startUrl: 'https://chat.deepseek.com/',
+      answerSelectors: [],
+      timeoutMs: 5000,
+      stableMs: 15,
+    },
+    baseDir: 'C:/tmp/dsh-web-chat-test',
+    executable: 'none',
+  });
+  bridge.client = {
+    evaluate: async () => snapshots.shift() ?? { ok: true, text: 'Hello' },
+  };
+  const deltas = [];
+  const result = await bridge.waitForAnswerStreaming(
+    { beforeText: '', beforeCount: 0, prompt: '' },
+    undefined,
+    (text) => deltas.push(text),
+  );
+  assert.equal(result.ok, true);
+  assert.equal(result.text, 'Hello');
+  assert.deepEqual(deltas, ['Hel', 'Hello']);
+});
 
 test('the DeepSeek browser provider has selectors and a new-chat action', () => {
   assert.deepEqual(BROWSER_PROVIDERS.map((provider) => provider.id), ['deepseek']);
