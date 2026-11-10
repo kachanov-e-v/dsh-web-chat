@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.10.4
+
+- Core tools (`read`, `write`, `edit`, `glob`, `grep`, `pwsh`,
+  `ask_user_question`, …) are prioritized in the 10 000-character tool budget so
+  their schemas are visible and arguments are not guessed.
+- Detect DeepSeek `Messages too frequent / Try again later`; pause 20 seconds
+  and retry once instead of hanging until timeout.
+- Throttle browser requests with a 1.5-second minimum gap.
+
 ## 0.10.3
 
 - The tool protocol now names the actual shell tool, `pwsh`, instead of `bash`.

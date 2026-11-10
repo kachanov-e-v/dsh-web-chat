@@ -77,6 +77,7 @@ test('the page expressions embed the DeepSeek selector profile safely', () => {
   assert.match(wait, /previous answer/);
   assert.match(wait, /beforeCount/);
   assert.match(wait, /CONTEXT_LIMIT/);
+  assert.match(wait, /RATE_LIMIT/);
 
   const snapshot = buildSnapshotExpression({
     answerSelectors: provider.answerSelectors,
@@ -85,6 +86,7 @@ test('the page expressions embed the DeepSeek selector profile safely', () => {
   });
   assert.match(snapshot, /isNew/);
   assert.match(snapshot, /CONTEXT_LIMIT/);
+  assert.match(snapshot, /RATE_LIMIT/);
 
   assert.match(buildCheckExpression(), /hasComposer/);
   assert.match(buildClickExpression({ sendSelectors: ['button[type="submit"]'] }), /button\[type=/);

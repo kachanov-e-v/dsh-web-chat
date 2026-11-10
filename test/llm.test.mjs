@@ -309,6 +309,50 @@ test('a bash tool call is aliased to pwsh on Windows', () => {
   assert.equal(jsonCall.arguments.command, 'ls');
 });
 
+test('core file and shell tools survive the tool budget', () => {
+  const tools = [
+    { name: 'free_models_search', description: 'x'.repeat(500), parameters: { type: 'object', properties: {} } },
+    { name: 'free_models_config', description: 'x'.repeat(500), parameters: { type: 'object', properties: {} } },
+    { name: 'plugin_manager', description: 'x'.repeat(500), parameters: { type: 'object', properties: {} } },
+    { name: 'read', description: 'Read a file', parameters: { type: 'object', properties: {} } },
+    { name: 'grep', description: 'Search files', parameters: { type: 'object', properties: {} } },
+    { name: 'pwsh', description: 'Run PowerShell', parameters: { type: 'object', properties: {} } },
+    { name: 'ask_user_question', description: 'Ask', parameters: { type: 'object', properties: {} } },
+  ];
+  const prompt = buildBrowserAgentPrompt({ system: '', messages: [], tools });
+  assert.match(prompt, /- ask_user_question:/);
+  assert.match(prompt, /- read:/);
+  assert.match(prompt, /- grep:/);
+  assert.match(prompt, /- pwsh:/);
+});
+
+test('a rate limit is retried once', async () => {
+  let calls = 0;
+  const adapter = createDeepSeekWebAdapter({
+    rateLimitDelayMs: 0,
+    bridge: {
+      ask: async () => {
+        calls += 1;
+        if (calls === 1) {
+          const error = new Error('DeepSeek rate limit');
+          error.code = 'RATE_LIMIT';
+          throw error;
+        }
+        return { answer: 'ok' };
+      },
+    },
+  });
+  const chunks = [];
+  for await (const chunk of adapter.stream({
+    sessionId: 'session-rate',
+    system: '',
+    messages: [],
+    tools: [],
+  })) chunks.push(chunk);
+  assert.equal(calls, 2);
+  assert.equal(chunks.find((chunk) => chunk.type === 'text-delta').text, 'ok');
+});
+
 test('partial DOM snapshots are streamed as text deltas', async () => {
   const adapter = createDeepSeekWebAdapter({
     bridge: {

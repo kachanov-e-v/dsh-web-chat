@@ -1,6 +1,6 @@
 # dsh-web-chat
 
-[![version](https://img.shields.io/badge/version-0.10.3-blue)](CHANGELOG.md)
+[![version](https://img.shields.io/badge/version-0.10.4-blue)](CHANGELOG.md)
 [![license](https://img.shields.io/badge/license-MIT-green)](LICENSE)
 
 **DeepSeek (browser)** — модель для DeepSeek Harness, которая использует ваш
@@ -115,6 +115,10 @@ DSH включение восстанавливается из `sessions.json`.
 - При `EMPTY`/`NO_ANSWER` — новый чат не чаще раза в 10 минут.
 - При `CONTEXT_LIMIT` («Length limit reached / Please start a new chat») —
   новый чат не чаще раза в минуту и повтор с полным промптом.
+- При «Messages too frequent» — пауза 20 секунд и один повтор; между запросами
+  держится пауза 1,5 секунды.
+- В бюджет схем 10 000 символов первыми попадают ядровые инструменты
+  (`read`, `write`, `edit`, `glob`, `grep`, `pwsh`, `ask_user_question`).
 - Неразобранный ответ возвращает ошибку, а не создаёт новый чат.
 - Ручная кнопка **«Новый чат»** доступна в панели.
 
