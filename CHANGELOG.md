@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.11.4
+
+- Recover `ask_user_question` when DeepSeek corrupts the DSML wrapper but still
+  emits a coherent `questions: [...]` array. The question card is shown instead
+  of the raw JSON text.
+- The tool protocol explicitly forbids native DSML and asks for the fenced
+  `<tool_call>` JSON block.
+
 ## 0.11.3
 
 - The prompt, tool protocol and continuation now require Russian answers,

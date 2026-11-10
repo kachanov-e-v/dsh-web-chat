@@ -4,6 +4,7 @@ import assert from 'node:assert/strict';
 import {
   buildBrowserAgentPrompt,
   MAX_PROMPT_CHARS,
+  parseBrowserToolCall,
   parseDeepSeekToolCall,
   parseJsonToolCall,
   stripToolTags,
@@ -411,6 +412,16 @@ test('a degenerate answer starts a fresh chat and retries', async () => {
   assert.equal(newChats, 1);
   assert.equal(calls, 2);
   assert.equal(chunks.find((chunk) => chunk.type === 'text-delta').text, 'recovered');
+});
+
+test('a bare questions JSON is recovered as ask_user_question', () => {
+  const answer = 'Сканирование сделал. Как поступить?\n'
+    + 'questions: [{"id":"scope","header":"Уточнение","question":"Что исправить?",'
+    + '"options":[{"label":"Все баги","description":"Ревизия логики"}]}]';
+  const call = parseBrowserToolCall(answer, ASK_TOOLS);
+  assert.equal(call.name, 'ask_user_question');
+  assert.equal(call.arguments.questions[0].id, 'scope');
+  assert.equal(call.arguments.questions[0].options[0].label, 'Все баги');
 });
 
 test('partial DOM snapshots are streamed as text deltas', async () => {
