@@ -40,6 +40,11 @@ window.__ModuleLoader__.load({
         loginOk: 'Logged in.',
         testOk: 'Answered: {answer}',
         newChatOk: 'A new DeepSeek chat is ready.',
+        deleteAll: 'Delete all chats',
+        deleteAllConfirmShort: 'Confirm delete',
+        deleteAllConfirm: 'Click again to delete every chat in chat.deepseek.com. This cannot be undone.',
+        deleteAllHint: 'Deletes every chat from chat.deepseek.com; this cannot be undone.',
+        deleteAllOk: 'Deleted {n} chats.',
         closeOk: 'Browser closed.',
         modelRegistered: 'DeepSeek (browser) model is registered.',
         modelMissing: 'Model is not registered — restart DSH.',
@@ -76,6 +81,11 @@ window.__ModuleLoader__.load({
         loginOk: 'Вход выполнен.',
         testOk: 'Ответ: {answer}',
         newChatOk: 'Новый чат DeepSeek готов.',
+        deleteAll: 'Удалить все чаты',
+        deleteAllConfirmShort: 'Подтвердить удаление',
+        deleteAllConfirm: 'Нажмите ещё раз, чтобы удалить все чаты в chat.deepseek.com. Отменить это нельзя.',
+        deleteAllHint: 'Удаляет все чаты в chat.deepseek.com без возможности восстановления.',
+        deleteAllOk: 'Удалено чатов: {n}.',
         closeOk: 'Браузер закрыт.',
         modelRegistered: 'Модель DeepSeek (browser) зарегистрирована.',
         modelMissing: 'Модель не зарегистрирована — перезапустите DSH.',
@@ -112,6 +122,11 @@ window.__ModuleLoader__.load({
         loginOk: '已登录。',
         testOk: '回答：{answer}',
         newChatOk: '新的 DeepSeek 聊天已准备好。',
+        deleteAll: '删除所有聊天',
+        deleteAllConfirmShort: '确认删除',
+        deleteAllConfirm: '再次点击以删除 chat.deepseek.com 中的所有聊天。此操作无法撤销。',
+        deleteAllHint: '删除 chat.deepseek.com 中的所有聊天，无法撤销。',
+        deleteAllOk: '已删除 {n} 个聊天。',
         closeOk: '浏览器已关闭。',
         modelRegistered: 'DeepSeek (browser) 模型已注册。',
         modelMissing: '模型未注册 — 请重启 DSH。',
@@ -141,6 +156,7 @@ window.__ModuleLoader__.load({
       '.dcm-btn:disabled{opacity:.5;cursor:default}',
       '.dcm-btn[data-primary="true"]{border-color:var(--dsw-alias-brand-primary);color:var(--dsw-alias-brand-primary)}',
       '.dcm-btn[data-on="true"]{border-color:var(--dsw-alias-state-success-primary);color:var(--dsw-alias-state-success-primary)}',
+      '.dcm-btn[data-danger="true"]{border-color:var(--dsw-alias-state-error-primary);color:var(--dsw-alias-state-error-primary)}',
       '.dcm-notice{margin:8px 0 0;padding:6px 8px;border-radius:6px;font-size:12px;background:var(--dsw-alias-bg-layer-2);color:var(--dsw-alias-label-primary)}',
       '.dcm-notice[data-tone="ok"]{color:var(--dsw-alias-state-success-primary)}',
       '.dcm-notice[data-tone="warn"]{color:var(--dsw-alias-state-warn-primary)}',
@@ -322,6 +338,7 @@ window.__ModuleLoader__.load({
         const snapshot = useStore(store);
         const copy = COPY[useLanguage()];
         const [busy, setBusy] = React.useState(null);
+        const [deleteArmed, setDeleteArmed] = React.useState(false);
         const state = snapshot.state;
         const sessionId = snapshot.sessionId;
         const enabled = typeof sessionId === 'string' && state?.sessions?.[sessionId] === true;
@@ -425,6 +442,25 @@ window.__ModuleLoader__.load({
           store.set({ notice: { tone: 'ok', text } });
         });
 
+        const deleteAll = () => {
+          if (!deleteArmed) {
+            setDeleteArmed(true);
+            store.set({ notice: { tone: 'warn', text: copy.deleteAllConfirm } });
+            return;
+          }
+          setDeleteArmed(false);
+          void run('delete-all', async () => {
+            const payload = await request('/dsh-web-chat/browser/deepseek/delete-all', 'POST');
+            await refresh();
+            store.set({
+              notice: {
+                tone: 'ok',
+                text: format(copy.deleteAllOk, { n: String(payload.deleted ?? 0) }),
+              },
+            });
+          });
+        };
+
         if (!snapshot.open) return null;
 
         return h(
@@ -467,8 +503,10 @@ window.__ModuleLoader__.load({
             h('button', { type: 'button', className: 'dcm-btn', disabled: busy !== null, onClick: () => browserAction('check', 'check', 'loginOk') }, busy === 'check' ? copy.busy : copy.check),
             h('button', { type: 'button', className: 'dcm-btn', disabled: busy !== null, onClick: () => browserAction('test', 'test', '') }, busy === 'test' ? copy.busy : copy.test),
             h('button', { type: 'button', className: 'dcm-btn', disabled: busy !== null, onClick: () => browserAction('new-chat', 'new-chat', 'newChatOk') }, busy === 'new-chat' ? copy.busy : copy.newChat),
+            h('button', { type: 'button', className: 'dcm-btn', 'data-danger': 'true', disabled: busy !== null, onClick: deleteAll }, busy === 'delete-all' ? copy.busy : deleteArmed ? copy.deleteAllConfirmShort : copy.deleteAll),
             h('button', { type: 'button', className: 'dcm-btn', disabled: busy !== null, onClick: () => browserAction('close', 'close', 'closeOk') }, busy === 'close' ? copy.busy : copy.close),
           ),
+          h('p', { className: 'dcm-hint' }, copy.deleteAllHint),
           h('p', { className: 'dcm-hint' }, modelRegistered ? copy.modelRegistered : copy.modelMissing),
           modelRegistered && state?.canSelectModel === false
             ? h('p', { className: 'dcm-hint' }, copy.modelSelectionUnavailable)

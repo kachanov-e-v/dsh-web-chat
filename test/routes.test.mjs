@@ -110,3 +110,24 @@ test('a cross-origin toggle is refused', async () => {
   );
   assert.equal(response.statusCode, 403);
 });
+
+test('delete-all delegates to the browser bridge', async () => {
+  const state = createState();
+  state.browserProviders.deepseek = { enabled: false, status: 'idle', lastError: null };
+  const handlers = createHandlers({
+    ctx: createCtx(),
+    state,
+    bridges: new Map([['deepseek', {
+      async deleteAllChats() {
+        return { deleted: 4 };
+      },
+    }]]),
+  });
+  const response = makeResponse();
+  await handlers.browser.deepseek['delete-all'](
+    makeRequest({ url: '/dsh-web-chat/browser/deepseek/delete-all' }),
+    response,
+  );
+  assert.equal(response.statusCode, 200);
+  assert.equal(parse(response).deleted, 4);
+});

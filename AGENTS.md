@@ -1,6 +1,6 @@
 # AGENTS.md
 
-Руководство для AI-агентов, работающих с `dsh-web-chat` (0.10.4).
+Руководство для AI-агентов, работающих с `dsh-web-chat` (0.11.0).
 
 ## Проект
 
@@ -26,8 +26,10 @@
 - `lib/memory.js` — `PROJECT_MEMORY.md`.
 - `lib/persist.js` — `sessions.json`.
 - `lib/routes.js` — same-origin API.
-- `lib/browser/dom.js` — CDP-выражения, `CONTEXT_LIMIT`, snapshot ответа.
-- `lib/browser/manager.js` — `waitForAnswerStreaming`, опрос DOM и onDelta.
+- `lib/browser/dom.js` — CDP-выражения, `CONTEXT_LIMIT`, snapshot ответа,
+  удаление чатов через меню/диалог.
+- `lib/browser/manager.js` — `waitForAnswerStreaming`, `deleteAllChats`, опрос
+  DOM и onDelta.
 - Хранилище профиля и `sessions.json` остаётся в `$DSH_HOME/dsh-chat-model` для
   совместимости со старым именем; не переименовывать без миграции входа.
 

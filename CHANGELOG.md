@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.11.0
+
+- Panel button **Delete all chats**: two-step confirmation, then removes every
+  chat from chat.deepseek.com through the logged-in browser. DSH sessions,
+  login state and project memory are untouched.
+- Browser bridge deletes chats one by one via the DeepSeek sidebar menu and
+  confirmation dialog, with retries and a wait for the list to shrink.
+- Route `POST /dsh-web-chat/browser/deepseek/delete-all` and a route test.
+
 ## 0.10.4
 
 - Core tools (`read`, `write`, `edit`, `glob`, `grep`, `pwsh`,
