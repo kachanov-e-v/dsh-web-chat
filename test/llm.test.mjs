@@ -4,6 +4,7 @@ import assert from 'node:assert/strict';
 import {
   buildBrowserAgentPrompt,
   MAX_PROMPT_CHARS,
+  parseBareJsonToolCall,
   parseBrowserToolCall,
   parseDeepSeekToolCall,
   parseJsonToolCall,
@@ -591,6 +592,66 @@ test('a partial tool opener is withheld from the streamed text', async () => {
   for await (const chunk of adapter.stream({ system: '', messages: [], tools: PWSH_TOOLS })) chunks.push(chunk);
   const deltas = chunks.filter((chunk) => chunk.type === 'text-delta').map((chunk) => chunk.text);
   assert.deepEqual(deltas, []);
+  assert.equal(chunks.at(-1).reason.kind, 'tool-calls');
+});
+
+test('a bare JSON tool call left by the code-block renderer is recovered', () => {
+  // Captured from chat.deepseek.com (0.12.x): a fenced ```tool block loses its
+  // fence and the <tool_call> tags, and its banner text leaks into innerText.
+  const answer = 'Начну со сканирования проекта.\n\ntool\nCopy\nDownload\n{"name":"working_directory","arguments":{}}';
+  const call = parseBareJsonToolCall(answer, [
+    { name: 'working_directory' },
+    { name: 'read' },
+  ]);
+  assert.equal(call.name, 'working_directory');
+  assert.deepEqual(call.arguments, {});
+  assert.equal(call.text, 'Начну со сканирования проекта.');
+});
+
+test('a bare JSON object followed by prose is not a tool call', () => {
+  const answer = 'Пример: {"name":"read","arguments":{"file_path":"a"}} — так выглядит вызов.';
+  assert.equal(parseBareJsonToolCall(answer, [{ name: 'read' }]), undefined);
+});
+
+test('an unknown bare JSON tool is not executed', () => {
+  const answer = 'Начну.\n{"name":"rm_rf","arguments":{}}';
+  assert.equal(parseBareJsonToolCall(answer, [{ name: 'read' }]), undefined);
+});
+
+test('the adapter turns a bare JSON payload into a tool call', async () => {
+  const answer = 'Начну со сканирования проекта.\n\ntool\nCopy\nDownload\n{"name":"working_directory","arguments":{}}';
+  const adapter = createDeepSeekWebAdapter({ bridge: { ask: async () => ({ answer }) } });
+  const chunks = [];
+  for await (const chunk of adapter.stream({
+    system: '',
+    messages: [],
+    tools: [{ name: 'working_directory', description: 'Set the cwd', parameters: { type: 'object' } }],
+  })) chunks.push(chunk);
+  const block = chunks.find((chunk) => chunk.type === 'block-end' && chunk.block.type === 'tool-call');
+  assert.equal(block.block.name, 'working_directory');
+  assert.equal(block.block.arguments, '{}');
+  assert.equal(chunks.at(-1).reason.kind, 'tool-calls');
+});
+
+test('a bare JSON tool payload stops text streaming', async () => {
+  const raw = 'Начну со сканирования проекта.\n\n{"name":"working_directory","arguments":{}}';
+  const adapter = createDeepSeekWebAdapter({
+    bridge: {
+      ask: async (_prompt, options) => {
+        options.onDelta('Начну со сканирования проекта.');
+        options.onDelta(raw);
+        return { answer: raw };
+      },
+    },
+  });
+  const chunks = [];
+  for await (const chunk of adapter.stream({
+    system: '',
+    messages: [],
+    tools: [{ name: 'working_directory', description: 'Set the cwd', parameters: { type: 'object' } }],
+  })) chunks.push(chunk);
+  const deltas = chunks.filter((chunk) => chunk.type === 'text-delta').map((chunk) => chunk.text);
+  assert.deepEqual(deltas, ['Начну со сканирования проекта.']);
   assert.equal(chunks.at(-1).reason.kind, 'tool-calls');
 });
 

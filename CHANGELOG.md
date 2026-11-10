@@ -1,5 +1,17 @@
 # Changelog
 
+## 0.11.7
+
+- A fenced `tool` block is rendered by DeepSeek as a widget: the ``` markers
+  and the inner `<tool_call>` tags never reach `innerText`, while the code-block
+  banner (`tool`, `Copy`, `Download`) does. The turn then ended as plain text —
+  the model announced “Начну со сканирования проекта”, the JSON was shown to the
+  user, and nothing ran. A bare `{"name":…,"arguments":{…}}` that ends the
+  answer is now parsed as a real tool call, the banner is hidden while the
+  answer is read, and a bare payload stops text streaming.
+- The banner is only hidden when it actually carries a copy/download button, so
+  ordinary answer text is never dropped.
+
 ## 0.11.6
 
 - Bare closing tags no longer leak into tool arguments. On the live page every
