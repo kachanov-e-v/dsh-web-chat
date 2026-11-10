@@ -1,6 +1,6 @@
 # AGENTS.md
 
-Руководство для AI-агентов, работающих с `dsh-chat-model` (0.9.4).
+Руководство для AI-агентов, работающих с `dsh-web-chat` (0.10.0).
 
 ## Проект
 
@@ -21,12 +21,15 @@
 ## Ключевые файлы
 
 - `lib/llm/prompt.js` — полный промпт, continuation, компактификация, парсеры.
-- `lib/llm/browser-web.js` — LLM-адаптер, сессии, cooldown, новый чат.
+- `lib/llm/browser-web.js` — LLM-адаптер, сессии, стриминг, cooldown, новый чат.
 - `lib/llm/deepseek-web.js` — DeepSeek-обёртка.
 - `lib/memory.js` — `PROJECT_MEMORY.md`.
 - `lib/persist.js` — `sessions.json`.
 - `lib/routes.js` — same-origin API.
-- `lib/browser/dom.js` — CDP-выражения, `CONTEXT_LIMIT`, ответы.
+- `lib/browser/dom.js` — CDP-выражения, `CONTEXT_LIMIT`, snapshot ответа.
+- `lib/browser/manager.js` — `waitForAnswerStreaming`, опрос DOM и onDelta.
+- Хранилище профиля и `sessions.json` остаётся в `$DSH_HOME/dsh-chat-model` для
+  совместимости со старым именем; не переименовывать без миграции входа.
 
 ## Соглашения
 
@@ -74,4 +77,4 @@
 4. Проверить живое подключение: включить плагин, открыть DeepSeek, войти.
 5. Для GitHub-релиза: `git tag vX.Y.Z`, `git push origin main --tags`,
    `gh release create vX.Y.Z`. Установка идёт через
-   `github:kachanov-e-v/dsh-chat-model#vX.Y.Z`.
+   `github:kachanov-e-v/dsh-web-chat#vX.Y.Z`.

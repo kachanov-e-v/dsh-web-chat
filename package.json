@@ -1,6 +1,6 @@
 {
-  "name": "dsh-chat-model",
-  "version": "0.9.4",
+  "name": "dsh-web-chat",
+  "version": "0.10.0",
   "private": true,
   "type": "module",
   "description": "DeepSeek Harness plugin that uses a logged-in chat.deepseek.com as the DeepSeek (browser) model.",
@@ -8,11 +8,11 @@
   "author": "Evgeniy Kachanov",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/kachanov-e-v/dsh-chat-model.git"
+    "url": "git+https://github.com/kachanov-e-v/dsh-web-chat.git"
   },
-  "homepage": "https://github.com/kachanov-e-v/dsh-chat-model#readme",
+  "homepage": "https://github.com/kachanov-e-v/dsh-web-chat#readme",
   "bugs": {
-    "url": "https://github.com/kachanov-e-v/dsh-chat-model/issues"
+    "url": "https://github.com/kachanov-e-v/dsh-web-chat/issues"
   },
   "engines": {
     "node": ">=20"

@@ -1,6 +1,6 @@
-# dsh-chat-model
+# dsh-web-chat
 
-[![version](https://img.shields.io/badge/version-0.9.4-blue)](CHANGELOG.md)
+[![version](https://img.shields.io/badge/version-0.10.0-blue)](CHANGELOG.md)
 [![license](https://img.shields.io/badge/license-MIT-green)](LICENSE)
 
 **DeepSeek (browser)** — модель для DeepSeek Harness, которая использует ваш
@@ -26,6 +26,8 @@ Chrome/Edge. Плагин не требует API-токена и не чита�
   промпта 60 000 символов.
 - Новый чат DeepSeek при достижении лимита веб-чата; ручная кнопка «Новый чат».
 - Плавающая панель рядом с чипом, закрывается по клику вне окна.
+- **Стриминг частичного ответа**: текст появляется в DSH по мере роста ответа
+  в веб-чате, а не только после полного round-trip.
 
 ## Требования
 
@@ -41,10 +43,10 @@ Chrome/Edge. Плагин не требует API-токена и не чита�
 В менеджере плагинов DSH укажите GitHub-спецификацию с тегом:
 
 ```text
-github:kachanov-e-v/dsh-chat-model#v0.9.4
+github:kachanov-e-v/dsh-web-chat#v0.10.0
 ```
 
-Репозиторий: https://github.com/kachanov-e-v/dsh-chat-model
+Репозиторий: https://github.com/kachanov-e-v/dsh-web-chat
 
 `install_bundle` принимает эту спецификацию как installation spec. После
 установки обновите страницу DSH (`F5`) и включите плагин в нужном чате.
@@ -52,8 +54,8 @@ github:kachanov-e-v/dsh-chat-model#v0.9.4
 ### Локальная разработка
 
 ```powershell
-git clone https://github.com/kachanov-e-v/dsh-chat-model.git `
-  "C:\Users\<you>\Desktop\dsh\Plugins\dsh-chat-model"
+git clone https://github.com/kachanov-e-v/dsh-web-chat.git `
+  "C:\Users\<you>\Desktop\dsh\Plugins\dsh-web-chat"
 ```
 
 Затем установите локальный бандл через менеджер плагинов DSH
@@ -78,7 +80,9 @@ DSH включение восстанавливается из `sessions.json`.
 3. В последующих запросах отправляется только продолжение с новыми
    сообщениями, чтобы не дублировать историю.
 4. Ответ модели разбирается как `<tool_call>{...}</tool_call>` или DSML.
-5. Tool-call выполняют обычные инструменты DSH; результат возвращается модели.
+5. Пока DeepSeek печатает, плагин опрашивает DOM и отдаёт новые фрагменты в
+   DSH; после стабилизации ответ разбирается окончательно.
+6. Tool-call выполняют обычные инструменты DSH; результат возвращается модели.
 
 Большие tool-результаты обрезаются до 10 000 символов; модель перечитывает
 нужное через `read`/`grep`. Старые сообщения компактифицируются.
@@ -111,6 +115,9 @@ DSH включение восстанавливается из `sessions.json`.
 - Промпт, история и `PROJECT_MEMORY.md` отправляются в DeepSeek — не пишите
   туда секреты.
 - В `sessions.json` хранятся только id сессий, без промптов и ответов.
+- Данные входа и `sessions.json` остаются в
+  `$DSH_HOME/dsh-chat-model` для совместимости с прежним именем; переименование
+  плагина не сбрасывает вход и включение.
 - Маршруты плагина same-origin, тела запросов ограничены.
 - Автоматизация потребительского веб-чата может нарушать условия DeepSeek.
 

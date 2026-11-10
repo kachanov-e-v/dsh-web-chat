@@ -1,6 +1,6 @@
 {
   "meta": {
-    "title": "DeepSeek Browser",
+    "title": "dsh-web-chat",
     "description": "Uses your logged-in chat.deepseek.com as the DeepSeek (browser) model in DeepSeek Harness."
   }
 }

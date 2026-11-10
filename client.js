@@ -1,5 +1,5 @@
 /**
- * Client half of dsh-chat-model.
+ * Client half of dsh-web-chat.
  *
  * One chip in the composer row and one floating DeepSeek Browser panel. The
  * chip turns green when the plugin is enabled; enabling also selects
@@ -7,7 +7,7 @@
  */
 
 window.__ModuleLoader__.load({
-  id: 'dsh-chat-model',
+  id: 'dsh-web-chat',
   factory(require) {
     const React = require('react');
     const h = React.createElement;
@@ -269,7 +269,7 @@ window.__ModuleLoader__.load({
 
       async function refresh() {
         try {
-          const payload = await request('/dsh-chat-model/state');
+          const payload = await request('/dsh-web-chat/state');
           store.set({ state: payload, loading: false, error: null });
         } catch (error) {
           store.set({
@@ -396,7 +396,7 @@ window.__ModuleLoader__.load({
           if (typeof sessionId !== 'string') {
             throw new Error(copy.noSession);
           }
-          const payload = await request('/dsh-chat-model/toggle', 'POST', {
+          const payload = await request('/dsh-web-chat/toggle', 'POST', {
             enabled: !enabled,
             sessionId,
           });
@@ -416,7 +416,7 @@ window.__ModuleLoader__.load({
         });
 
         const browserAction = (name, path, okText) => run(name, async () => {
-          const payload = await request(`/dsh-chat-model/browser/deepseek/${path}`, 'POST');
+          const payload = await request(`/dsh-web-chat/browser/deepseek/${path}`, 'POST');
           await refresh();
           let text = okText;
           if (path === 'test') text = format(copy.testOk, { answer: String(payload.answer ?? '').slice(0, 200) });

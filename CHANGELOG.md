@@ -1,51 +1,22 @@
 # Changelog
 
+## 0.10.0
+
+- Renamed the plugin and package to **dsh-web-chat**; routes, slot id, Cordis
+  patch and GitHub repository follow the new name.
+- Added **streaming partial answers**: the browser bridge polls the DOM and the
+  LLM adapter emits text deltas before the final answer. Tool-call markers stop
+  text streaming so raw DSML/`<tool_call>` is never shown as text.
+- Browser profile and `sessions.json` stay in `$DSH_HOME/dsh-chat-model` for
+  backward compatibility, so the rename does not log the user out.
+- Install from GitHub with
+  `github:kachanov-e-v/dsh-web-chat#v0.10.0`.
+
 ## 0.9.4
 
 - Install directly from GitHub with
   `github:kachanov-e-v/dsh-chat-model#v0.9.4`.
-- README now documents the GitHub installation spec and the tagged release.
+- README documents the GitHub installation spec and the tagged release.
 - No runtime changes from 0.9.3.
 
 ## 0.9.3
-
-- Auto-new-chat on DeepSeek `CONTEXT_LIMIT` with a 60-second cooldown and a full
-  prompt retry.
-- Full prompt reduced to 60 000 characters, project memory to 6 000, tool
-  results to 10 000.
-- Incremental continuation prompts are preserved.
-- Auto-new-chat no longer triggers on prompt size or unparsed answers.
-
-## 0.9.2
-
-- Incremental prompts: full prompt on the first turn, continuation with only
-  new messages afterwards.
-- Detect “Length limit reached / Please start a new chat”.
-- Compacted older context and a bounded full prompt.
-
-## 0.9.0
-
-- `PROJECT_MEMORY.md` is created, loaded into every request, and maintained by
-  the model.
-- Per-chat enablement persists in `sessions.json`.
-- Deterministic context compaction.
-- Auto-new-chat only for `EMPTY`/`NO_ANSWER` with a cooldown.
-
-## 0.8.0
-
-- DeepSeek-only: one browser provider and the `DeepSeek (browser)` model.
-- Per-chat enablement via `sessionController.selectModel`; `NOT_ENABLED` in
-  other chats.
-- Green chip, anchored settings panel, outside-click close.
-- `<tool_call>` code fences and native DSML parsing.
-
-## 0.7.0
-
-- Removed Gemini, Qwen and Mistral.
-- Removed the direct DeepSeek API, token storage, consult tools and “Always”
-  mode.
-
-## Earlier
-
-- 0.2–0.6: browser bridges for Gemini/Qwen/Mistral, automatic new chats,
-  DSML support, prompt compaction and the first per-chat model adapters.

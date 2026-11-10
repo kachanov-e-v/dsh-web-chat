@@ -221,6 +221,46 @@ test('subsequent turns send a continuation instead of the full prompt', async ()
   assert.ok(!prompts[1].includes('SYS-MARKER'));
 });
 
+test('partial DOM snapshots are streamed as text deltas', async () => {
+  const adapter = createDeepSeekWebAdapter({
+    bridge: {
+      ask: async (_prompt, options) => {
+        options.onDelta('Hel');
+        options.onDelta('Hello');
+        return { answer: 'Hello' };
+      },
+    },
+  });
+  const chunks = [];
+  for await (const chunk of adapter.stream({ system: '', messages: [], tools: [] })) chunks.push(chunk);
+  const deltas = chunks.filter((chunk) => chunk.type === 'text-delta').map((chunk) => chunk.text);
+  assert.deepEqual(deltas, ['Hel', 'lo']);
+  const end = chunks.find((chunk) => chunk.type === 'block-end' && chunk.block?.type === 'text');
+  assert.equal(end.block.text, 'Hello');
+  assert.equal(chunks.at(-1).reason.kind, 'stop');
+});
+
+test('a tool-call marker stops text streaming and emits the tool call', async () => {
+  const raw = 'Let me check.\n```tool\n<tool_call>{"name":"bash","arguments":{"command":"ls"}}</tool_call>\n```';
+  const adapter = createDeepSeekWebAdapter({
+    bridge: {
+      ask: async (_prompt, options) => {
+        options.onDelta('Let me check.');
+        options.onDelta(raw);
+        return { answer: raw };
+      },
+    },
+  });
+  const chunks = [];
+  for await (const chunk of adapter.stream({ system: '', messages: [], tools: TOOLS })) chunks.push(chunk);
+  const deltas = chunks.filter((chunk) => chunk.type === 'text-delta').map((chunk) => chunk.text);
+  assert.deepEqual(deltas, ['Let me check.']);
+  assert.ok(!deltas.join('').includes('<tool_call>'));
+  assert.equal(chunks.at(-1).reason.kind, 'tool-calls');
+  const call = chunks.find((chunk) => chunk.type === 'tool-call-delta');
+  assert.equal(call.name, 'bash');
+});
+
 test('a web-chat length limit starts a new chat and retries with the full prompt', async () => {
   let calls = 0;
   let newChats = 0;
