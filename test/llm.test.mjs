@@ -47,6 +47,8 @@ test('the adapter prompt carries the system prompt, tools, transcript, and proto
   assert.match(prompt, /ambiguous/i);
   assert.match(prompt, /pwsh/);
   assert.doesNotMatch(prompt, /use bash/i);
+  assert.match(prompt, /scan first/i);
+  assert.match(prompt, /Never repeat a tool call/i);
 });
 
 test('a very large request stays inside the hard prompt limit', () => {
@@ -351,6 +353,37 @@ test('a rate limit is retried once', async () => {
   })) chunks.push(chunk);
   assert.equal(calls, 2);
   assert.equal(chunks.find((chunk) => chunk.type === 'text-delta').text, 'ok');
+});
+
+test('a degenerate answer starts a fresh chat and retries', async () => {
+  let calls = 0;
+  let newChats = 0;
+  const adapter = createDeepSeekWebAdapter({
+    bridge: {
+      ask: async () => {
+        calls += 1;
+        if (calls === 1) {
+          const error = new Error('DeepSeek started repeating a malformed tool call');
+          error.code = 'DEGENERATED';
+          throw error;
+        }
+        return { answer: 'recovered' };
+      },
+      startNewChat: async () => {
+        newChats += 1;
+      },
+    },
+  });
+  const chunks = [];
+  for await (const chunk of adapter.stream({
+    sessionId: 'session-degenerate',
+    system: '',
+    messages: [],
+    tools: [],
+  })) chunks.push(chunk);
+  assert.equal(newChats, 1);
+  assert.equal(calls, 2);
+  assert.equal(chunks.find((chunk) => chunk.type === 'text-delta').text, 'recovered');
 });
 
 test('partial DOM snapshots are streamed as text deltas', async () => {

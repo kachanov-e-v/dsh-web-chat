@@ -47,6 +47,38 @@ test('the streaming bridge reports growing DOM snapshots', async () => {
   assert.deepEqual(deltas, ['Hel', 'Hello']);
 });
 
+test('a degenerate DSML repetition is rejected', async () => {
+  const bridge = new BrowserBridge({
+    provider: {
+      id: 'deepseek',
+      host: 'chat.deepseek.com',
+      startUrl: 'https://chat.deepseek.com/',
+      answerSelectors: [],
+      timeoutMs: 5000,
+      stableMs: 15,
+    },
+    baseDir: 'C:/tmp/dsh-web-chat-test',
+    executable: 'none',
+  });
+  bridge.client = {
+    evaluate: async () => ({
+      ok: true,
+      text: 'DSML parameter name="limit" string="false">1 '.repeat(300),
+    }),
+  };
+  await assert.rejects(
+    bridge.waitForAnswerStreaming(
+      { beforeText: '', beforeCount: 0, prompt: '' },
+      undefined,
+      () => {},
+    ),
+    (error) => {
+      assert.equal(error.code, 'DEGENERATED');
+      return true;
+    },
+  );
+});
+
 test('the DeepSeek browser provider has selectors and a new-chat action', () => {
   assert.deepEqual(BROWSER_PROVIDERS.map((provider) => provider.id), ['deepseek']);
   const provider = browserProviderById('deepseek');

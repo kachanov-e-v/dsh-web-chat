@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.11.1
+
+- Detect degenerate answers: a long repetition of `DSML` / `parameter name=`
+  fragments is rejected, the web chat is reset, and the request is retried with
+  the full prompt.
+- The prompt now forbids repeating a tool call or its parameters and tells the
+  model to scan large projects before reading only the needed ranges.
+
 ## 0.11.0
 
 - Panel button **Delete all chats**: two-step confirmation, then removes every
