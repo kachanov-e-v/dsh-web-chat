@@ -29,6 +29,7 @@ test('the adapter prompt carries the system prompt, tools, transcript, and proto
   assert.match(prompt, /build an app/);
   assert.match(prompt, /<tool_call>/);
   assert.match(prompt, /ask_user_question/);
+  assert.match(prompt, /ambiguous/i);
 });
 
 test('a very large request stays inside the hard prompt limit', () => {
@@ -218,7 +219,24 @@ test('subsequent turns send a continuation instead of the full prompt', async ()
   assert.match(prompts[0], /first/);
   assert.match(prompts[1], /CONTINUATION/);
   assert.match(prompts[1], /second/);
+  assert.match(prompts[1], /ask_user_question/);
   assert.ok(!prompts[1].includes('SYS-MARKER'));
+});
+
+test('ask_user_question stays in the prompt even with many tools', () => {
+  const tools = Array.from({ length: 40 }, (_, index) => ({
+    name: `tool_${index}`,
+    description: 'A tool with a moderately long description.',
+    parameters: { type: 'object', properties: {} },
+  }));
+  tools.push({
+    name: 'ask_user_question',
+    description: 'Ask the user a structured question.',
+    parameters: { type: 'object', properties: {} },
+  });
+  const prompt = buildBrowserAgentPrompt({ system: '', messages: [], tools });
+  assert.match(prompt, /- ask_user_question:/);
+  assert.match(prompt, /ambiguous/i);
 });
 
 test('partial DOM snapshots are streamed as text deltas', async () => {

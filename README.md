@@ -1,6 +1,6 @@
 # dsh-web-chat
 
-[![version](https://img.shields.io/badge/version-0.10.0-blue)](CHANGELOG.md)
+[![version](https://img.shields.io/badge/version-0.10.1-blue)](CHANGELOG.md)
 [![license](https://img.shields.io/badge/license-MIT-green)](LICENSE)
 
 **DeepSeek (browser)** — модель для DeepSeek Harness, которая использует ваш
@@ -28,6 +28,8 @@ Chrome/Edge. Плагин не требует API-токена и не чита�
 - Плавающая панель рядом с чипом, закрывается по клику вне окна.
 - **Стриминг частичного ответа**: текст появляется в DSH по мере роста ответа
   в веб-чате, а не только после полного round-trip.
+- **Уточняющие вопросы**: при неоднозначном запросе модель сначала спрашивает
+  через `ask_user_question`, а не угадывает.
 
 ## Требования
 
@@ -43,7 +45,7 @@ Chrome/Edge. Плагин не требует API-токена и не чита�
 В менеджере плагинов DSH укажите GitHub-спецификацию с тегом:
 
 ```text
-github:kachanov-e-v/dsh-web-chat#v0.10.0
+github:kachanov-e-v/dsh-web-chat#v0.10.1
 ```
 
 Репозиторий: https://github.com/kachanov-e-v/dsh-web-chat

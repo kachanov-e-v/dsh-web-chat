@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.10.1
+
+- The agent prompt now requires `ask_user_question` when the request is
+  ambiguous or key requirements are missing, instead of guessing.
+- `ask_user_question` is prioritized in the tool list so its schema survives
+  the 10 000-character tool budget.
+
 ## 0.10.0
 
 - Renamed the plugin and package to **dsh-web-chat**; routes, slot id, Cordis
