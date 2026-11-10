@@ -2,6 +2,8 @@
 
 ## 0.10.1
 
+- The default GitHub install spec is now `github:kachanov-e-v/dsh-web-chat`
+  (branch `main`, latest); tags remain available for pinning.
 - The agent prompt now requires `ask_user_question` when the request is
   ambiguous or key requirements are missing, instead of guessing.
 - `ask_user_question` is prioritized in the tool list so its schema survives

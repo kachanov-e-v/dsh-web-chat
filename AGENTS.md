@@ -76,5 +76,6 @@
    (`Slots.listSubTree`).
 4. Проверить живое подключение: включить плагин, открыть DeepSeek, войти.
 5. Для GitHub-релиза: `git tag vX.Y.Z`, `git push origin main --tags`,
-   `gh release create vX.Y.Z`. Установка идёт через
+   `gh release create vX.Y.Z`. Установка по умолчанию идёт с `main`:
+   `github:kachanov-e-v/dsh-web-chat`; закреплённая версия —
    `github:kachanov-e-v/dsh-web-chat#vX.Y.Z`.
