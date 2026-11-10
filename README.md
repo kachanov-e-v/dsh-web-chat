@@ -1,6 +1,6 @@
 # dsh-web-chat
 
-[![version](https://img.shields.io/badge/version-0.11.1-blue)](CHANGELOG.md)
+[![version](https://img.shields.io/badge/version-0.11.2-blue)](CHANGELOG.md)
 [![license](https://img.shields.io/badge/license-MIT-green)](LICENSE)
 
 **DeepSeek (browser)** — модель для DeepSeek Harness, которая использует ваш

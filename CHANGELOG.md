@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.11.2
+
+- Parse DeepSeek DSML argument fields written as nested `invoke` tags. This was
+  the cause of `read({})`, `glob({})`, `pwsh({})` and “missing required
+  property”: the tool name was parsed but every argument was lost.
+- Nested `invoke` fields and classic `parameter` fields are both supported;
+  `string="false"` values are parsed as JSON.
+- Regression test for the exact `read` DSML emitted by DeepSeek Web.
+
 ## 0.11.1
 
 - Detect degenerate answers: a long repetition of `DSML` / `parameter name=`

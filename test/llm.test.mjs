@@ -22,6 +22,18 @@ const PWSH_TOOLS = [{
   parameters: { type: 'object', properties: { command: { type: 'string' } } },
 }];
 
+const READ_TOOLS = [{
+  name: 'read',
+  description: 'Read a file',
+  parameters: {
+    type: 'object',
+    properties: {
+      file_path: { type: 'string' },
+      offset: { type: 'integer' },
+    },
+  },
+}];
+
 const ASK_TOOLS = [
   ...TOOLS,
   {
@@ -309,6 +321,19 @@ test('a bash tool call is aliased to pwsh on Windows', () => {
   );
   assert.equal(jsonCall.name, 'pwsh');
   assert.equal(jsonCall.arguments.command, 'ls');
+});
+
+test('DeepSeek nested invoke argument tags are parsed', () => {
+  const dsml = '<｜｜DSML｜｜ calls>\n'
+    + '<｜｜DSML｜｜ invoke name="read">\n'
+    + '<｜｜DSML｜｜ invoke name="file_path" string="true">index.html</｜DSML｜｜ invoke>\n'
+    + '<｜｜DSML｜｜ invoke name="offset" string="false">1</｜DSML｜｜ invoke>\n'
+    + '</｜｜DSML｜｜ invoke>\n'
+    + '</｜｜DSML｜｜ calls>';
+  const call = parseDeepSeekToolCall(dsml, READ_TOOLS);
+  assert.equal(call.name, 'read');
+  assert.equal(call.arguments.file_path, 'index.html');
+  assert.equal(call.arguments.offset, 1);
 });
 
 test('core file and shell tools survive the tool budget', () => {
