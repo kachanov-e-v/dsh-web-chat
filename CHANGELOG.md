@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.10.3
+
+- The tool protocol now names the actual shell tool, `pwsh`, instead of `bash`.
+- `bash` tool calls in `<tool_call>` or DSML are aliased to `pwsh` when the
+  Harness exposes `pwsh`, so the call is executed instead of being shown as
+  text and silently stopping the turn.
+
 ## 0.10.2
 
 - A session that actually invokes `deepseek-web` is auto-enabled and persisted,

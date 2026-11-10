@@ -16,6 +16,12 @@ const TOOLS = [{
   parameters: { type: 'object', properties: { command: { type: 'string' } } },
 }];
 
+const PWSH_TOOLS = [{
+  name: 'pwsh',
+  description: 'Run a PowerShell command',
+  parameters: { type: 'object', properties: { command: { type: 'string' } } },
+}];
+
 const ASK_TOOLS = [
   ...TOOLS,
   {
@@ -39,6 +45,8 @@ test('the adapter prompt carries the system prompt, tools, transcript, and proto
   assert.match(prompt, /<tool_call>/);
   assert.match(prompt, /ask_user_question/);
   assert.match(prompt, /ambiguous/i);
+  assert.match(prompt, /pwsh/);
+  assert.doesNotMatch(prompt, /use bash/i);
 });
 
 test('a very large request stays inside the hard prompt limit', () => {
@@ -281,6 +289,24 @@ test('a model request auto-enables and persists its session', async () => {
   assert.equal(state.sessions.get('session-auto'), true);
   assert.equal(saved, 1);
   assert.equal(chunks.find((chunk) => chunk.type === 'text-delta').text, 'ok');
+});
+
+test('a bash tool call is aliased to pwsh on Windows', () => {
+  const dsml = '<||DSML||calls>\n'
+    + '<||DSML||invoke name="bash">\n'
+    + '<||DSML||parameter name="command" string="true">node -e "console.log(1)"</||DSML||parameter>\n'
+    + '</||DSML||invoke>\n'
+    + '</||DSML||calls>';
+  const dsmlCall = parseDeepSeekToolCall(dsml, PWSH_TOOLS);
+  assert.equal(dsmlCall.name, 'pwsh');
+  assert.match(dsmlCall.arguments.command, /node -e/);
+
+  const jsonCall = parseJsonToolCall(
+    '```tool\n<tool_call>{"name":"bash","arguments":{"command":"ls"}}</tool_call>\n```',
+    PWSH_TOOLS,
+  );
+  assert.equal(jsonCall.name, 'pwsh');
+  assert.equal(jsonCall.arguments.command, 'ls');
 });
 
 test('partial DOM snapshots are streamed as text deltas', async () => {

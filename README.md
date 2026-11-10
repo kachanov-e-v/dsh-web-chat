@@ -1,6 +1,6 @@
 # dsh-web-chat
 
-[![version](https://img.shields.io/badge/version-0.10.2-blue)](CHANGELOG.md)
+[![version](https://img.shields.io/badge/version-0.10.3-blue)](CHANGELOG.md)
 [![license](https://img.shields.io/badge/license-MIT-green)](LICENSE)
 
 **DeepSeek (browser)** — модель для DeepSeek Harness, которая использует ваш
@@ -143,7 +143,8 @@ DSH включение восстанавливается из `sessions.json`.
 - **Нужен вход.** «Проверить вход»; войдите в открытом окне.
 - **Жёлтая плашка Chrome** про `--disable-blink-features` — косметическая.
 - **`EMPTY`/неразобранный ответ.** Пришлите ответ из веб-чата; проверьте
-  code fence/DSML и селекторы.
+  code fence/DSML и селекторы. Если модель вызывает `bash`, а в DSH доступен
+  только `pwsh`, плагин автоматически перенаправляет вызов в `pwsh`.
 
 ## Разработка
 
