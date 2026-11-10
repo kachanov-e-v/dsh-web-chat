@@ -551,6 +551,49 @@ test('a tool-call marker stops text streaming and emits the tool call', async ()
   assert.equal(call.name, 'bash');
 });
 
+test('bare </…DSML…> closers do not leak into the arguments', () => {
+  // Captured from chat.deepseek.com (0.12.x): every tag is closed with a bare
+  // `</｜｜DSML｜｜>` that has no `parameter`/`invoke` keyword.
+  const answer = [
+    '<｜｜DSML｜｜ calls>',
+    '<｜｜DSML｜｜ invoke name="pwsh">',
+    '<｜｜DSML｜｜ parameter name="command" string="true">Get-Content -Encoding UTF8 app.js | Select-Object -Skip 100 -First 100</｜｜DSML｜｜>',
+    '<｜｜DSML｜｜ parameter name="description" string="true">Show app.js lines 101-200</｜DSML｜｜>',
+    '</｜｜DSML｜｜>',
+    '</｜｜DSML｜｜ calls>',
+  ].join('\n');
+  const call = parseDeepSeekToolCall(answer, [{ name: 'pwsh' }]);
+  assert.equal(call.name, 'pwsh');
+  assert.deepEqual(call.arguments, {
+    command: 'Get-Content -Encoding UTF8 app.js | Select-Object -Skip 100 -First 100',
+    description: 'Show app.js lines 101-200',
+  });
+  assert.equal(call.text, '');
+  assert.equal(stripToolTags(answer), '');
+});
+
+test('a partial tool opener is withheld from the streamed text', async () => {
+  const raw = '<｜｜DSML｜｜ calls>\n'
+    + '<｜｜DSML｜｜ invoke name="pwsh">\n'
+    + '<｜｜DSML｜｜ parameter name="command" string="true">Get-ChildItem</｜｜DSML｜｜>\n'
+    + '</｜｜DSML｜｜ calls>';
+  const adapter = createDeepSeekWebAdapter({
+    bridge: {
+      ask: async (_prompt, options) => {
+        options.onDelta('<｜｜');
+        options.onDelta('<｜｜DSML');
+        options.onDelta(raw);
+        return { answer: raw };
+      },
+    },
+  });
+  const chunks = [];
+  for await (const chunk of adapter.stream({ system: '', messages: [], tools: PWSH_TOOLS })) chunks.push(chunk);
+  const deltas = chunks.filter((chunk) => chunk.type === 'text-delta').map((chunk) => chunk.text);
+  assert.deepEqual(deltas, []);
+  assert.equal(chunks.at(-1).reason.kind, 'tool-calls');
+});
+
 test('a web-chat length limit starts a new chat and retries with the full prompt', async () => {
   let calls = 0;
   let newChats = 0;

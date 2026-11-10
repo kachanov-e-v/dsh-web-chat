@@ -1,6 +1,6 @@
 # dsh-web-chat
 
-[![version](https://img.shields.io/badge/version-0.11.5-blue)](CHANGELOG.md)
+[![version](https://img.shields.io/badge/version-0.11.6-blue)](CHANGELOG.md)
 [![license](https://img.shields.io/badge/license-MIT-green)](LICENSE)
 
 **DeepSeek (browser)** — модель для DeepSeek Harness, которая использует ваш
@@ -186,9 +186,10 @@ DSH включение восстанавливается из `sessions.json`.
 - **Жёлтая плашка Chrome** про `--disable-blink-features` — косметическая.
 - **`EMPTY`/неразобранный ответ.** Пришлите ответ из веб-чата; проверьте
   code fence/DSML и селекторы. Если модель вызывает `bash`, а в DSH доступен
-  только `pwsh`, плагин автоматически перенаправляет вызов в `pwsh`. С 0.11.5
-  потерянный `</invoke>`, слитые `parameter`-теги и `$…$`-формулы больше не
-  дают `EMPTY`; вызов неизвестного инструмента приходит как `UNKNOWN_TOOL`.
+  только `pwsh`, плагин автоматически перенаправляет вызов в `pwsh`. С 0.11.6
+  потерянный `</invoke>`, слитые и голые `</…DSML…>`-теги и `$…$`-формулы
+  больше не портят аргументы (пути, `workdir`, команды); вызов неизвестного
+  инструмента приходит как `UNKNOWN_TOOL`.
 
 ## Разработка
 

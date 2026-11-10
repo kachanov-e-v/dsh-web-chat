@@ -124,6 +124,7 @@ test('the page expressions embed the DeepSeek selector profile safely', () => {
   assert.match(snapshot, /readText/);
   assert.match(snapshot, /annotation\[encoding="application\/x-tex"\]/);
   assert.match(snapshot, /replaceChildren/);
+  assert.match(snapshot, /whiteSpace = 'pre-wrap'/);
 
   assert.match(buildCheckExpression(), /hasComposer/);
   assert.match(buildClickExpression({ sendSelectors: ['button[type="submit"]'] }), /button\[type=/);

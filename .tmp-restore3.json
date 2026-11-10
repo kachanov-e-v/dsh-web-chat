@@ -1,0 +1,5 @@
+{
+  "text": "<｜｜DSML｜｜ calls>\n<｜｜DSML｜｜ invoke name=\"pwsh\">\n<｜｜DSML｜｜ parameter name=\"command\" string=\"true\">$lines = Get-Content -Encoding UTF8 app.js\n$lines[100..200]\nWrite-Output \"=====CSS CHECK=====\"\n$css = Get-Content -Raw -Encoding UTF8 styles.css\n$selectors = @('.card__priority','.column__delete','.icon-btn','.dialog__actions','.card:focus-visible','.card__tag','.card__desc','.column__title')\nforeach ($sel in $selectors) { if ($css -notmatch [regex]::Escape($sel)) { Write-Output \"MISSING IN CSS: $sel\" } }\nWrite-Output \"css check done\"</｜｜DSML｜｜>\n<｜｜DSML｜｜ parameter name=\"description\" string=\"true\">Check CSS selectors used by JS</｜DSML｜｜>\n</｜｜DSML｜｜>\n</｜｜DSML｜｜ calls>",
+  "restored": true,
+  "nodeCount": 2
+}

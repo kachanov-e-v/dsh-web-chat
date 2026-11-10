@@ -1,0 +1,265 @@
+### 0 math=8 minus=12
+<｜｜DSML｜｜ calls>
+<｜｜DSML｜｜ invoke name="pwsh">
+<｜｜DSML｜｜ parameter name="command" string="true">
+𝑙
+𝑖
+𝑛
+𝑒
+𝑠
+=
+𝐺
+𝑒
+𝑡
+−
+𝐶
+𝑜
+𝑛
+𝑡
+𝑒
+𝑛
+𝑡
+−
+𝐸
+𝑛
+𝑐
+𝑜
+𝑑
+𝑖
+𝑛
+𝑔
+𝑈
+𝑇
+𝐹
+8
+𝑎
+𝑝
+𝑝
+.
+𝑗
+𝑠
+lines=Get−Content−EncodingUTF8app.jslines[100..200]
+Write-Output "=====CSS CHECK====="
+
+𝑐
+𝑠
+𝑠
+=
+𝐺
+𝑒
+𝑡
+−
+𝐶
+𝑜
+𝑛
+𝑡
+𝑒
+𝑛
+𝑡
+−
+𝑅
+𝑎
+𝑤
+−
+𝐸
+𝑛
+𝑐
+𝑜
+𝑑
+𝑖
+𝑛
+𝑔
+𝑈
+𝑇
+𝐹
+8
+𝑠
+𝑡
+𝑦
+𝑙
+𝑒
+𝑠
+.
+𝑐
+𝑠
+𝑠
+css=Get−Content−Raw−EncodingUTF8styles.cssselectors = @('.card__priority','.column__delete','.icon-btn','.dialog__actions','.card:focus-visible','.card__tag','.card__desc','.column__title')
+foreach (
+𝑠
+𝑒
+𝑙
+𝑖
+𝑛
+selinselectors) { if (
+𝑐
+𝑠
+𝑠
+−
+𝑛
+𝑜
+𝑡
+𝑚
+𝑎
+𝑡
+𝑐
+ℎ
+[
+𝑟
+𝑒
+𝑔
+𝑒
+𝑥
+]
+:
+:
+𝐸
+𝑠
+𝑐
+𝑎
+𝑝
+𝑒
+(
+css−notmatch[regex]::Escape(sel)) { Write-Output "MISSING IN CSS: $sel" } }
+Write-Output "css check done"</｜｜DSML｜｜>
+<｜｜DSML｜｜ parameter name="description" string="true">Check C
+
+### 1 math=8 minus=12
+<｜｜DSML｜｜ calls>
+<｜｜DSML｜｜ invoke name="pwsh">
+<｜｜DSML｜｜ parameter name="command" string="true">
+𝑙
+𝑖
+𝑛
+𝑒
+𝑠
+=
+𝐺
+𝑒
+𝑡
+−
+𝐶
+𝑜
+𝑛
+𝑡
+𝑒
+𝑛
+𝑡
+−
+𝐸
+𝑛
+𝑐
+𝑜
+𝑑
+𝑖
+𝑛
+𝑔
+𝑈
+𝑇
+𝐹
+8
+𝑎
+𝑝
+𝑝
+.
+𝑗
+𝑠
+lines=Get−Content−EncodingUTF8app.jslines[100..200]
+Write-Output "=====CSS CHECK====="
+
+𝑐
+𝑠
+𝑠
+=
+𝐺
+𝑒
+𝑡
+−
+𝐶
+𝑜
+𝑛
+𝑡
+𝑒
+𝑛
+𝑡
+−
+𝑅
+𝑎
+𝑤
+−
+𝐸
+𝑛
+𝑐
+𝑜
+𝑑
+𝑖
+𝑛
+𝑔
+𝑈
+𝑇
+𝐹
+8
+𝑠
+𝑡
+𝑦
+𝑙
+𝑒
+𝑠
+.
+𝑐
+𝑠
+𝑠
+css=Get−Content−Raw−EncodingUTF8styles.cssselectors = @('.card__priority','.column__delete','.icon-btn','.dialog__actions','.card:focus-visible','.card__tag','.card__desc','.column__title')
+foreach (
+𝑠
+𝑒
+𝑙
+𝑖
+𝑛
+selinselectors) { if (
+𝑐
+𝑠
+𝑠
+−
+𝑛
+𝑜
+𝑡
+𝑚
+𝑎
+𝑡
+𝑐
+ℎ
+[
+𝑟
+𝑒
+𝑔
+𝑒
+𝑥
+]
+:
+:
+𝐸
+𝑠
+𝑐
+𝑎
+𝑝
+𝑒
+(
+css−notmatch[regex]::Escape(sel)) { Write-Output "MISSING IN CSS: $sel" } }
+Write-Output "css check done"</｜｜DSML｜｜>
+<｜｜DSML｜｜ parameter name="description" string="true">Check C
+
+### 2 math=0 minus=0
+<｜｜DSML｜｜ calls>
+<｜｜DSML｜｜ invoke name="pwsh">
+<｜｜DSML｜｜ parameter name="command" string="true">Get-Content -Encoding UTF8 app.js | Select-Object -Skip 100 -First 100</｜｜DSML｜｜>
+<｜｜DSML｜｜ parameter name="description" string="true">Show app.js lines 101-200</｜DSML｜｜>
+</｜｜DSML｜｜>
+</｜｜DSML｜｜ calls>
+
+### 3 math=0 minus=0
+<｜｜DSML｜｜ calls>
+<｜｜DSML｜｜ invoke name="pwsh">
+<｜｜DSML｜｜ parameter name="command" string="true">Get-Content -Encoding UTF8 app.js | Select-Object -Skip 100 -First 100</｜｜DSML｜｜>
+<｜｜DSML｜｜ parameter name="description" string="true">Show app.js lines 101-200</｜DSML｜｜>
+</｜｜DSML｜｜>
+</｜｜DSML｜｜ calls>

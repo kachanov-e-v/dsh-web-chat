@@ -1,5 +1,21 @@
 # Changelog
 
+## 0.11.6
+
+- Bare closing tags no longer leak into tool arguments. On the live page every
+  DSML tag is closed as `</｜｜DSML｜｜>` (no `parameter`/`invoke` keyword), and
+  0.11.5 kept that text in the value: `read` got `app.js</｜｜DSML｜｜>`, `grep`
+  failed on the same path, and `pwsh` failed with
+  `spawn …DeepSeek Harness.exe ENOENT` because `workdir` ended with the tag.
+  Any closing DSML tag now terminates the current field.
+- KaTeX restoration preserves line breaks. The TeX source is read verbatim and
+  the formula is switched to `white-space: pre-wrap` while `innerText` runs,
+  so a multi-line PowerShell script keeps its `$`, hyphens and newlines instead
+  of being glued into one line.
+- A half-streamed `<｜｜` opener is withheld until it is clear whether it is a
+  tool call, so a partial tag no longer appears as a text block.
+- An unclosed `calls` wrapper is dropped from the answer text.
+
 ## 0.11.5
 
 - A broken DSML envelope no longer ends the turn as `EMPTY`. DeepSeek often

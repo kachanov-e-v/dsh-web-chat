@@ -1,0 +1,6 @@
+<｜｜DSML｜｜ calls>
+<｜｜DSML｜｜ invoke name="pwsh">
+<｜｜DSML｜｜ parameter name="command" string="true">Get-Content -Encoding UTF8 app.js | Select-Object -Skip 100 -First 100</｜｜DSML｜｜>
+<｜｜DSML｜｜ parameter name="description" string="true">Show app.js lines 101-200</｜DSML｜｜>
+</｜｜DSML｜｜>
+</｜｜DSML｜｜ calls>

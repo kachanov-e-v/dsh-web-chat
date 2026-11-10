@@ -1,0 +1,12 @@
+<｜｜DSML｜｜ calls>
+<｜｜DSML｜｜ invoke name="pwsh">
+<｜｜DSML｜｜ parameter name="command" string="true">$lines = Get-Content -Encoding UTF8 app.js
+$lines[100..200]
+Write-Output "=====CSS CHECK====="
+$css = Get-Content -Raw -Encoding UTF8 styles.css
+$selectors = @('.card__priority','.column__delete','.icon-btn','.dialog__actions','.card:focus-visible','.card__tag','.card__desc','.column__title')
+foreach ($sel in $selectors) { if ($css -notmatch [regex]::Escape($sel)) { Write-Output "MISSING IN CSS: $sel" } }
+Write-Output "css check done"</｜｜DSML｜｜>
+<｜｜DSML｜｜ parameter name="description" string="true">Check CSS selectors used by JS</｜DSML｜｜>
+</｜｜DSML｜｜>
+</｜｜DSML｜｜ calls>
