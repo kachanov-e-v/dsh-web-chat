@@ -1,5 +1,24 @@
 # Changelog
 
+## 0.11.5
+
+- A broken DSML envelope no longer ends the turn as `EMPTY`. DeepSeek often
+  drops the closing `</…DSML… invoke>` tag and fuses the closing `parameter`
+  tag with the next opening one
+  (`</… parameter name="timeoutMs" …>30000</… parameter>`); the argument reader
+  is now a small tag state machine that recovers every field, and an unclosed
+  `invoke` is read up to the closing `calls` wrapper.
+- Tool arguments that DeepSeek renders as math are read from the TeX source.
+  `$c = Get-Content -Raw …$` used to arrive as `𝑐 = 𝐺𝑒𝑡−𝐶𝑜𝑛𝑡𝑒𝑛𝑡…` (KaTeX
+  glyphs, minus sign, prime, one character per line); the answer snapshot now
+  swaps each KaTeX/MathJax node for its `application/x-tex` annotation, reads
+  the text, and restores the DOM.
+- An unparseable tool call for a known tool starts a new chat and retries once
+  instead of failing the turn; a call for an unknown tool fails fast with
+  `UNKNOWN_TOOL` and names the tool.
+- A bare `questions: [...]` answer is no longer streamed into the chat as raw
+  text before the `ask_user_question` card is emitted.
+
 ## 0.11.4
 
 - Recover `ask_user_question` when DeepSeek corrupts the DSML wrapper but still

@@ -119,6 +119,11 @@ test('the page expressions embed the DeepSeek selector profile safely', () => {
   assert.match(snapshot, /isNew/);
   assert.match(snapshot, /CONTEXT_LIMIT/);
   assert.match(snapshot, /RATE_LIMIT/);
+  // `$…$` is rendered as KaTeX on the page; the snapshot must read the TeX
+  // source, otherwise tool arguments arrive as math glyphs.
+  assert.match(snapshot, /readText/);
+  assert.match(snapshot, /annotation\[encoding="application\/x-tex"\]/);
+  assert.match(snapshot, /replaceChildren/);
 
   assert.match(buildCheckExpression(), /hasComposer/);
   assert.match(buildClickExpression({ sendSelectors: ['button[type="submit"]'] }), /button\[type=/);

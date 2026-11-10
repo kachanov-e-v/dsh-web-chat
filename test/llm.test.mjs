@@ -150,7 +150,7 @@ test('the DeepSeek adapter streams a DSML tool call', async () => {
   assert.equal(chunks.at(-1).reason.kind, 'tool-calls');
 });
 
-test('an unparseable answer returns EMPTY without starting a new chat', async () => {
+test('a tool call for an unknown tool fails fast without a new chat', async () => {
   let newChats = 0;
   const adapter = createDeepSeekWebAdapter({
     bridge: {
@@ -164,7 +164,8 @@ test('an unparseable answer returns EMPTY without starting a new chat', async ()
   for await (const chunk of adapter.stream({ system: '', messages: [], tools: [] })) chunks.push(chunk);
   assert.equal(newChats, 0);
   assert.equal(chunks.at(-1).reason.kind, 'error');
-  assert.equal(chunks.at(-1).reason.failure.code, 'EMPTY');
+  assert.equal(chunks.at(-1).reason.failure.code, 'UNKNOWN_TOOL');
+  assert.match(chunks.at(-1).reason.failure.message, /"edit"/);
 });
 
 test('a bridge EMPTY answer starts a new chat and retries once', async () => {
@@ -324,6 +325,92 @@ test('a bash tool call is aliased to pwsh on Windows', () => {
   );
   assert.equal(jsonCall.name, 'pwsh');
   assert.equal(jsonCall.arguments.command, 'ls');
+});
+
+test('a DSML call with a fused closing tag and no invoke close is parsed', () => {
+  // Captured from chat.deepseek.com (0.11.5): the model closed `workdir` with
+  // `</… parameter name="timeoutMs" …>` and never closed `invoke`.
+  const answer = [
+    '<｜｜DSML｜｜ calls>',
+    '<｜｜DSML｜｜ invoke name="pwsh">',
+    '<｜｜DSML｜｜ parameter name="command" string="true">powershell -NoProfile -File .\\inspect.ps1</｜｜DSML｜｜ parameter>',
+    '<｜｜DSML｜｜ parameter name="description" string="true">Запустить inspect.ps1</｜｜DSML｜｜ parameter>',
+    '<｜｜DSML｜｜ parameter name="workdir" string="true">C:\\work</｜｜DSML｜｜ parameter>',
+    '</｜｜DSML｜｜ parameter name="timeoutMs" string="false">30000</｜｜DSML｜｜ parameter>',
+    '<｜｜DSML｜｜ parameter name="run_in_background" string="false">false</｜｜DSML｜｜ parameter>',
+    '<｜｜DSML｜｜ parameter name="sandbox_permissions" string="true">workspace-write</｜｜DSML｜｜ parameter>',
+    '<｜｜DSML｜｜ parameter name="justification" string="true">Нужно прочитать файл</｜｜DSML｜｜ parameter>',
+    '</｜｜DSML｜｜ calls>',
+  ].join('\n');
+  const call = parseDeepSeekToolCall(answer, [{ name: 'pwsh' }]);
+  assert.equal(call.name, 'pwsh');
+  assert.deepEqual(call.arguments, {
+    command: 'powershell -NoProfile -File .\\inspect.ps1',
+    description: 'Запустить inspect.ps1',
+    workdir: 'C:\\work',
+    timeoutMs: 30000,
+    run_in_background: false,
+    sandbox_permissions: 'workspace-write',
+    justification: 'Нужно прочитать файл',
+  });
+  assert.equal(call.text, '');
+});
+
+test('an unclosed DSML call still parses its arguments', () => {
+  const answer = '<｜｜DSML｜｜ calls>\n'
+    + '<｜｜DSML｜｜ invoke name="read">\n'
+    + '<｜｜DSML｜｜ parameter name="file_path" string="true">app.js</｜｜DSML｜｜ parameter>';
+  const call = parseDeepSeekToolCall(answer, READ_TOOLS);
+  assert.equal(call.name, 'read');
+  assert.equal(call.arguments.file_path, 'app.js');
+});
+
+test('the adapter streams a recovered broken DSML call instead of EMPTY', async () => {
+  const answer = '<｜｜DSML｜｜ calls>\n'
+    + '<｜｜DSML｜｜ invoke name="pwsh">\n'
+    + '<｜｜DSML｜｜ parameter name="command" string="true">Get-ChildItem</｜｜DSML｜｜ parameter>\n'
+    + '<｜｜DSML｜｜ parameter name="workdir" string="true">C:\\work</｜｜DSML｜｜ parameter>\n'
+    + '</｜｜DSML｜｜ parameter name="timeoutMs" string="false">30000</｜｜DSML｜｜ parameter>\n'
+    + '</｜｜DSML｜｜ calls>';
+  const adapter = createDeepSeekWebAdapter({ bridge: { ask: async () => ({ answer }) } });
+  const chunks = [];
+  for await (const chunk of adapter.stream({
+    system: '',
+    messages: [],
+    tools: [{ name: 'pwsh', description: 'Run PowerShell', parameters: { type: 'object' } }],
+  })) chunks.push(chunk);
+  const block = chunks.find((chunk) => chunk.type === 'block-end');
+  assert.equal(block.block.name, 'pwsh');
+  assert.deepEqual(JSON.parse(block.block.arguments), {
+    command: 'Get-ChildItem',
+    workdir: 'C:\\work',
+    timeoutMs: 30000,
+  });
+  assert.equal(chunks.at(-1).reason.kind, 'tool-calls');
+});
+
+test('a malformed envelope for a known tool starts a new chat and retries', async () => {
+  let calls = 0;
+  let newChats = 0;
+  const adapter = createDeepSeekWebAdapter({
+    bridge: {
+      ask: async () => {
+        calls += 1;
+        return { answer: calls === 1 ? '<｜｜DSML｜｜ invoke name="pwsh">' : 'recovered' };
+      },
+      startNewChat: async () => {
+        newChats += 1;
+      },
+    },
+  });
+  const chunks = [];
+  for await (const chunk of adapter.stream({
+    system: '',
+    messages: [],
+    tools: [{ name: 'pwsh', description: 'Run PowerShell', parameters: { type: 'object' } }],
+  })) chunks.push(chunk);
+  assert.equal(newChats, 1);
+  assert.equal(chunks.find((chunk) => chunk.type === 'text-delta').text, 'recovered');
 });
 
 test('DeepSeek nested invoke argument tags are parsed', () => {
