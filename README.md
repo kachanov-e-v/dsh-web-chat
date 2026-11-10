@@ -1,6 +1,6 @@
 # dsh-web-chat
 
-[![version](https://img.shields.io/badge/version-0.11.2-blue)](CHANGELOG.md)
+[![version](https://img.shields.io/badge/version-0.11.3-blue)](CHANGELOG.md)
 [![license](https://img.shields.io/badge/license-MIT-green)](LICENSE)
 
 **DeepSeek (browser)** — модель для DeepSeek Harness, которая использует ваш
@@ -110,6 +110,12 @@ DSH включение восстанавливается из `sessions.json`.
 вход в браузере, `sessions.json` и `PROJECT_MEMORY.md` не затрагиваются.
 Удаление идёт через тот же открытый браузер и требует, чтобы профиль был
 залогинен.
+
+## Язык
+
+Модель отвечает **по-русски**: объяснения, планы, вопросы и варианты
+`ask_user_question` — на русском. Код, команды, пути и имена инструментов
+остаются как есть и не переводятся.
 
 ## Большие проекты
 

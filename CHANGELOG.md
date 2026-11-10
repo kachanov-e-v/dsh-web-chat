@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.11.3
+
+- The prompt, tool protocol and continuation now require Russian answers,
+  clarifications and `ask_user_question` labels/options. Code, commands, paths
+  and tool names are kept unchanged.
+
 ## 0.11.2
 
 - Parse DeepSeek DSML argument fields written as nested `invoke` tags. This was

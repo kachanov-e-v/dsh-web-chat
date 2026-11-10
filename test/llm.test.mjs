@@ -61,6 +61,7 @@ test('the adapter prompt carries the system prompt, tools, transcript, and proto
   assert.doesNotMatch(prompt, /use bash/i);
   assert.match(prompt, /scan first/i);
   assert.match(prompt, /Never repeat a tool call/i);
+  assert.match(prompt, /Russian/i);
 });
 
 test('a very large request stays inside the hard prompt limit', () => {
@@ -251,6 +252,7 @@ test('subsequent turns send a continuation instead of the full prompt', async ()
   assert.match(prompts[1], /CONTINUATION/);
   assert.match(prompts[1], /second/);
   assert.match(prompts[1], /ask_user_question/);
+  assert.match(prompts[1], /Russian/i);
   assert.ok(!prompts[1].includes('SYS-MARKER'));
 });
 
